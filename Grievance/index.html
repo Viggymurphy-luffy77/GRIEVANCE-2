@@ -1,0 +1,2414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrievanceTrack – Smart Complaint Management & Follow-up Reminder System</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  
+  <!-- Local Stylesheets (Zero external dependencies) -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="accent-cyan">
+
+  <!-- ========================================== -->
+  <!-- 1. LOGIN & AUTHENTICATION SCREEN           -->
+  <!-- ========================================== -->
+  <section id="section-login" class="login-page-wrapper">
+    <div class="login-card glass-panel">
+      
+      <!-- Brand Header -->
+      <div class="login-brand-header">
+        <div class="login-brand-logo">GT</div>
+        <h1 data-i18n="appName">GrievanceTrack</h1>
+        <p class="brand-subtitle mt-1" data-i18n="appTagline">Smart Complaint Management & Follow-up Reminder System</p>
+        <p class="font-11 text-slate-300 italic mt-2" style="max-width: 420px; margin: 8px auto 0;">
+          "Build accountability into every follow-up — Ensuring no pending grievance goes unnoticed."
+        </p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="form-login" onsubmit="event.preventDefault(); Auth.login(document.getElementById('login-email').value, document.getElementById('login-password').value);">
+        <div class="form-group">
+          <label class="form-label" data-i18n="emailLabel">Email Address</label>
+          <input type="email" id="login-email" class="form-input" placeholder="name@grievancetrack.demo" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <div class="flex-between mb-1">
+            <label class="form-label m-0" data-i18n="passwordLabel">Password</label>
+            <a href="javascript:void(0)" onclick="Modal.open('modal-forgot-password')" class="text-link font-11">Forgot?</a>
+          </div>
+          <div class="flex gap-2">
+            <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="btn btn-outline btn-sm" onclick="const p = document.getElementById('login-password'); p.type = p.type === 'password' ? 'text' : 'password';" title="Toggle Password Visibility">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div class="flex-between mb-3 font-12">
+          <label class="flex-align-center gap-1 pointer">
+            <input type="checkbox" id="login-remember" checked> Remember session
+          </label>
+          <a href="javascript:void(0)" onclick="Modal.open('modal-register')" class="text-link font-semibold">
+            Register as Citizen
+          </a>
+        </div>
+
+        <button type="submit" id="login-submit-btn" class="btn btn-primary w-100 py-3 font-14">
+          <span data-i18n="loginBtn">Sign In</span> →
+        </button>
+
+        <div class="signup-callout-card mt-3 pt-3 border-top text-center">
+          <p class="font-12 text-muted mb-2">Are you a resident citizen without an account?</p>
+          <button type="button" class="btn btn-outline btn-sm w-100 py-2 font-13 font-semibold flex-center gap-2" onclick="Modal.open('modal-register')">
+            <span>📝</span> <span>Sign Up as New Citizen</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Instant Role Switcher Cards (Auto-fills credentials on 1-click) -->
+      <div class="demo-roles-container">
+        <div class="flex-between">
+          <span class="font-11 text-muted text-uppercase font-semibold">Switch Demo Role (1-Click Auto-Fill):</span>
+          <button type="button" class="btn btn-outline btn-sm font-10 lang-toggle-btn" onclick="App.toggleLanguage()">
+            🌐 ಕನ್ನಡ
+          </button>
+        </div>
+
+        <div class="demo-roles-grid">
+          <!-- Citizen Role Card -->
+          <div class="demo-role-card active" data-role="citizen" onclick="Auth.selectDemoRole('citizen')">
+            <span class="role-card-badge">🧑‍💻</span>
+            <span class="role-card-title text-cyan" data-i18n="roleCitizen">Citizen</span>
+            <span class="role-card-hint">Rahul Sharma</span>
+          </div>
+
+          <!-- Officer Role Card -->
+          <div class="demo-role-card" data-role="officer" onclick="Auth.selectDemoRole('officer')">
+            <span class="role-card-badge">👮</span>
+            <span class="role-card-title text-purple" data-i18n="roleOfficer">Police Officer</span>
+            <span class="role-card-hint">SI Suresh Biradar</span>
+          </div>
+
+          <!-- Admin Role Card -->
+          <div class="demo-role-card" data-role="admin" onclick="Auth.selectDemoRole('admin')">
+            <span class="role-card-badge">👨‍💼</span>
+            <span class="role-card-title text-emerald" data-i18n="roleAdmin">Admin</span>
+            <span class="role-card-hint">Dr. R. Patil</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ========================================== -->
+  <!-- 2. MAIN APPLICATION WORKSPACE SHELL       -->
+  <!-- ========================================== -->
+  <section id="section-app" class="app-layout" style="display: none;">
+    
+    <!-- Sidebar -->
+    <aside id="app-sidebar" class="sidebar role-citizen">
+      
+      <!-- Brand & Jurisdiction -->
+      <div class="sidebar-header">
+        <div class="brand-logo-badge">GT</div>
+        <div class="brand-title-wrap">
+          <h1 data-i18n="appName">GrievanceTrack</h1>
+          <div class="brand-subtitle">CMC Bidar Portal</div>
+        </div>
+      </div>
+
+      <!-- Navigation Menus for Roles -->
+      <nav class="sidebar-nav">
+        
+        <!-- ================= CITIZEN SIDEBAR MENU ================= -->
+        <div id="sidebar-menu-citizen" class="role-sidebar-menu">
+          <div class="sidebar-nav-heading">Citizen Workspace</div>
+          
+          <a class="sidebar-nav-item active" data-page="citizen-overview" onclick="App.navigateTo('citizen-overview')">
+            <div class="sidebar-nav-link-content">
+              <span>📊</span> <span data-i18n="overview">Overview</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="citizen-submit" onclick="App.navigateTo('citizen-submit')">
+            <div class="sidebar-nav-link-content">
+              <span>📝</span> <span data-i18n="submitGrievance">Submit Grievance</span>
+            </div>
+            <span class="badge badge-info font-10">New</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="citizen-complaints" onclick="App.navigateTo('citizen-complaints')">
+            <div class="sidebar-nav-link-content">
+              <span>📂</span> <span data-i18n="myComplaints">My Complaints</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="citizen-track" onclick="App.navigateTo('citizen-track')">
+            <div class="sidebar-nav-link-content">
+              <span>🔍</span> <span data-i18n="trackComplaint">Track Complaint</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="citizen-notifications" onclick="App.navigateTo('citizen-notifications')">
+            <div class="sidebar-nav-link-content">
+              <span>🔔</span> <span data-i18n="notifications">Notifications</span>
+            </div>
+            <span class="sidebar-badge unread-count-badge badge-cyan" style="display: none;">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="citizen-feedback" onclick="App.navigateTo('citizen-feedback')">
+            <div class="sidebar-nav-link-content">
+              <span>⭐</span> <span data-i18n="feedback">Feedback & Rating</span>
+            </div>
+          </a>
+
+          <div class="sidebar-nav-heading">Account & Guide</div>
+
+          <a class="sidebar-nav-item" data-page="citizen-profile" onclick="App.navigateTo('citizen-profile')">
+            <div class="sidebar-nav-link-content">
+              <span>👤</span> <span data-i18n="myProfile">My Profile</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="citizen-help" onclick="App.navigateTo('citizen-help')">
+            <div class="sidebar-nav-link-content">
+              <span>💡</span> <span>Help & Support</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- ================= OFFICER SIDEBAR MENU ================= -->
+        <div id="sidebar-menu-officer" class="role-sidebar-menu" style="display: none;">
+          <div class="sidebar-nav-heading">Officer Desk</div>
+          
+          <a class="sidebar-nav-item active" data-page="officer-overview" onclick="App.navigateTo('officer-overview')">
+            <div class="sidebar-nav-link-content">
+              <span>📊</span> <span>Overview</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="officer-assigned" onclick="Officer.showAllAssigned()">
+            <div class="sidebar-nav-link-content">
+              <span>📋</span> <span>My Assigned Cases</span>
+            </div>
+            <span id="officer-sidebar-badge-all" class="badge badge-purple font-10">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="officer-new" onclick="Officer.showNewAssignments()">
+            <div class="sidebar-nav-link-content">
+              <span>📥</span> <span>New Assignments</span>
+            </div>
+            <span id="officer-sidebar-badge-new" class="badge badge-cyan font-10">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="officer-inprogress" onclick="Officer.showInProgressQueue()">
+            <div class="sidebar-nav-link-content">
+              <span>⚙️</span> <span>In Progress</span>
+            </div>
+            <span id="officer-sidebar-badge-inprogress" class="badge badge-warning font-10">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="officer-overdue" onclick="Officer.showOverdueQueue()">
+            <div class="sidebar-nav-link-content">
+              <span>⚠️</span> <span>Overdue Cases</span>
+            </div>
+            <span id="officer-sidebar-badge-overdue" class="badge badge-danger font-10 pulse">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="officer-resolved" onclick="Officer.showResolvedQueue()">
+            <div class="sidebar-nav-link-content">
+              <span>✅</span> <span>Resolution History</span>
+            </div>
+            <span id="officer-sidebar-badge-resolved" class="badge badge-emerald font-10">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="officer-notifications" onclick="App.navigateTo('officer-notifications')">
+            <div class="sidebar-nav-link-content">
+              <span>🔔</span> <span>Notifications</span>
+            </div>
+            <span class="sidebar-badge unread-count-badge badge-purple" style="display: none;">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="officer-profile" onclick="App.navigateTo('officer-profile')">
+            <div class="sidebar-nav-link-content">
+              <span>👷</span> <span>Officer Profile</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- ================= ADMIN SIDEBAR MENU ================= -->
+        <div id="sidebar-menu-admin" class="role-sidebar-menu" style="display: none;">
+          <div class="sidebar-nav-heading">Admin Control Desk</div>
+          
+          <a class="sidebar-nav-item active" data-page="admin-overview" onclick="App.navigateTo('admin-overview')">
+            <div class="sidebar-nav-link-content">
+              <span>🏛️</span> <span>Admin Overview</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-all-complaints" onclick="App.navigateTo('admin-all-complaints')">
+            <div class="sidebar-nav-link-content">
+              <span>📑</span> <span>All Complaints Ledger</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-unassigned" onclick="App.navigateTo('admin-unassigned')">
+            <div class="sidebar-nav-link-content">
+              <span>⚡</span> <span>Unassigned Cases</span>
+            </div>
+            <span class="badge badge-cyan font-10">Route</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-escalations" onclick="App.navigateTo('admin-escalations')">
+            <div class="sidebar-nav-link-content">
+              <span>🚨</span> <span>Overdue & Escalations</span>
+            </div>
+            <span class="badge badge-danger font-10 pulse">Urgent</span>
+          </a>
+
+          <div class="sidebar-nav-heading">Resource Governance</div>
+
+          <a class="sidebar-nav-item" data-page="admin-officers" onclick="App.navigateTo('admin-officers')">
+            <div class="sidebar-nav-link-content">
+              <span>👷</span> <span>Officer Management</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-citizens" onclick="App.navigateTo('admin-citizens')">
+            <div class="sidebar-nav-link-content">
+              <span>👥</span> <span>Citizen Management</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-departments" onclick="App.navigateTo('admin-departments')">
+            <div class="sidebar-nav-link-content">
+              <span>🏢</span> <span>Department & SLAs</span>
+            </div>
+          </a>
+
+          <div class="sidebar-nav-heading">Intelligence & System</div>
+
+          <a class="sidebar-nav-item" data-page="admin-reminders" onclick="App.navigateTo('admin-reminders')">
+            <div class="sidebar-nav-link-content">
+              <span>⏰</span> <span>Reminder Engine</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-analytics" onclick="App.navigateTo('admin-analytics')">
+            <div class="sidebar-nav-link-content">
+              <span>📈</span> <span>Analytics & Reports</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-notifications" onclick="App.navigateTo('admin-notifications')">
+            <div class="sidebar-nav-link-content">
+              <span>🔔</span> <span>Notification Center</span>
+            </div>
+            <span class="sidebar-badge unread-count-badge badge-emerald" style="display: none;">0</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-audit" onclick="App.navigateTo('admin-audit')">
+            <div class="sidebar-nav-link-content">
+              <span>🛡️</span> <span>Audit Trail Logs</span>
+            </div>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-database" onclick="App.navigateTo('admin-database')">
+            <div class="sidebar-nav-link-content">
+              <span>💾</span> <span>SQL Database Explorer</span>
+            </div>
+            <span class="badge badge-purple font-10">SQL</span>
+          </a>
+
+          <a class="sidebar-nav-item" data-page="admin-settings" onclick="App.navigateTo('admin-settings')">
+            <div class="sidebar-nav-link-content">
+              <span>⚙️</span> <span>System Settings</span>
+            </div>
+          </a>
+        </div>
+
+      </nav>
+
+      <!-- Sidebar Footer / Logout -->
+      <div class="sidebar-footer">
+        <button class="btn btn-outline btn-sm w-100" onclick="Auth.logout()">
+          <span>🚪</span> <span data-i18n="logout">Logout</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <!-- Mobile Hamburger -->
+          <button class="btn-icon-subtle mobile-menu-toggle" style="display: none;" onclick="document.getElementById('app-sidebar').classList.toggle('mobile-open');">
+            ☰
+          </button>
+
+          <!-- Global Quick Search Trigger -->
+          <div class="global-search-trigger" onclick="App.openSearchModal()">
+            <span>🔍</span>
+            <span>Search grievances...</span>
+            <span class="search-shortcut-pill">Ctrl+K</span>
+          </div>
+
+          <!-- Live Digital Clock -->
+          <div class="live-clock-pill">
+            <span class="live-dot"></span>
+            <span id="live-clock-display">Loading clock...</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Viva Quick Actions Dropdown -->
+          <div class="flex gap-2">
+            <button class="btn btn-outline btn-sm font-11" onclick="Reminders.runCheck(true)" title="Run reminder and overdue checks immediately">
+              ⏰ Run Reminders
+            </button>
+            <button class="btn btn-outline btn-sm font-11 lang-toggle-btn" onclick="App.toggleLanguage()">
+              🌐 ಕನ್ನಡ
+            </button>
+          </div>
+
+          <!-- User Role Pill & Avatar -->
+          <div class="user-profile-badge" style="display: flex; align-items: center; gap: 8px;">
+            <span id="topbar-user-avatar" class="user-avatar-mini">👤</span>
+            <div class="flex-column text-left">
+              <span id="topbar-user-name" class="font-12 font-semibold topbar-user-name">User</span>
+              <span id="topbar-role-badge" class="badge font-10">Citizen</span>
+            </div>
+            <button class="btn btn-outline btn-sm font-11 py-1 px-2 ml-1" onclick="Auth.logout()" title="Logout from portal" style="border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">
+              🚪 Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dynamic Page Content Viewport -->
+      <main class="page-content" id="page-content">
+
+        <!-- ======================================================== -->
+        <!-- CITIZEN VIEWS                                            -->
+        <!-- ======================================================== -->
+
+        <!-- Citizen View: Overview -->
+        <div id="view-citizen-overview" class="view-panel active">
+          <div class="section-header flex-between flex-wrap gap-2">
+            <div>
+              <h2 class="section-title">
+                Good day, <span id="citizen-greeting-name" class="text-cyan">Citizen</span>! 👋
+              </h2>
+              <p class="section-subtitle">
+                Track civic grievances registered under your jurisdiction: <span id="citizen-locality-pill" class="badge badge-neutral">Ward 04 • Bidar</span>
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-primary btn-sm" onclick="App.navigateTo('citizen-submit')">
+                ➕ Submit New Grievance
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="App.navigateTo('citizen-track')">
+                🔍 Track Complaint ID
+              </button>
+            </div>
+          </div>
+
+          <!-- Citizen KPI Metric Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card glass-panel" style="--card-accent: var(--citizen-cyan);">
+              <div class="kpi-header">
+                <span class="kpi-title" data-i18n="totalComplaints">Total Grievances</span>
+                <span class="kpi-icon-wrap text-cyan">📁</span>
+              </div>
+              <div id="citizen-stat-total" class="kpi-value text-cyan">0</div>
+              <div class="kpi-footer">Submitted by your account</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #f59e0b;">
+              <div class="kpi-header">
+                <span class="kpi-title" data-i18n="inProgress">In Progress</span>
+                <span class="kpi-icon-wrap text-orange">⚙️</span>
+              </div>
+              <div id="citizen-stat-progress" class="kpi-value text-orange">0</div>
+              <div class="kpi-footer">Field work & inspection ongoing</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #10b981;">
+              <div class="kpi-header">
+                <span class="kpi-title" data-i18n="resolved">Resolved</span>
+                <span class="kpi-icon-wrap text-emerald">✅</span>
+              </div>
+              <div id="citizen-stat-resolved" class="kpi-value text-emerald">0</div>
+              <div class="kpi-footer">Successfully fixed by department</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #ec4899;">
+              <div class="kpi-header">
+                <span class="kpi-title" data-i18n="actionNeeded">Action Needed</span>
+                <span class="kpi-icon-wrap text-pink">⭐</span>
+              </div>
+              <div id="citizen-stat-action" class="kpi-value text-pink">0</div>
+              <div class="kpi-footer">Awaiting rating or info reply</div>
+            </div>
+          </div>
+
+          <!-- Overview Grid: Recent complaints & Status mini chart -->
+          <div class="grid-3 gap-3">
+            <div class="glass-panel p-3" style="grid-column: span 2;">
+              <div class="flex-between mb-3">
+                <h3 class="font-14 font-semibold">Recent Grievance Submissions</h3>
+                <a href="javascript:void(0)" onclick="App.navigateTo('citizen-complaints')" class="text-link font-12">View All →</a>
+              </div>
+              <div class="table-responsive">
+                <table class="gt-table">
+                  <thead>
+                    <tr>
+                      <th>Token ID</th>
+                      <th>Title & Locality</th>
+                      <th>Submitted</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="citizen-recent-tbody">
+                    <!-- Populated via citizen.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Mini Status Canvas Chart -->
+            <div class="glass-panel p-3 text-center">
+              <h3 class="font-14 font-semibold mb-2">Status Overview</h3>
+              <canvas id="citizen-mini-chart" height="180"></canvas>
+              <div class="font-11 text-muted mt-2">Live redressal distribution</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Citizen View: Submit Grievance -->
+        <div id="view-citizen-submit" class="view-panel">
+          <div class="section-header">
+            <div class="flex-align-center gap-2">
+              <h2 class="section-title m-0">📝 Register Public Grievance</h2>
+            </div>
+            <p class="section-subtitle">File complaints directly across Police & Civic Municipal desks. Multi-channel intake with guaranteed follow-up reminders & SLA tracking.</p>
+          </div>
+
+          <div class="glass-panel p-4" style="max-width: 860px; margin: 0 auto;">
+            <form id="form-submit-complaint" onsubmit="event.preventDefault(); CitizenSubmit.handleSubmit();">
+              
+              <!-- Intake Channel & Language Detection Row -->
+              <div class="grid-2 gap-3 mb-3">
+                <div class="form-group">
+                  <label class="form-label">Grievance Intake Channel *</label>
+                  <select id="complaint-channel" class="form-select" required>
+                    <option value="Online Portal" selected>🌐 Online Web Portal (Citizen Self-Service)</option>
+                    <option value="Physical Document">📄 Physical Document / Station Written Petition</option>
+                    <option value="Helpline 112">📞 Emergency Helpline 112 / Call Center Desk</option>
+                    <option value="Email Desk">✉️ Email / Digital Office Inward</option>
+                  </select>
+                  <span class="input-hint">Select the intake mechanism through which this grievance entered the system</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Language Detection & Translation Mode</label>
+                  <div class="p-2 glass-card flex-between align-center" style="height: 42px;">
+                    <span id="complaint-detected-lang-badge" class="badge badge-neutral font-11">Auto-Detect (EN / KN)</span>
+                    <button type="button" class="btn btn-outline btn-sm font-11 py-1" onclick="Citizen.previewTranslation()">
+                      🌐 Translate Preview
+                    </button>
+                  </div>
+                  <span class="input-hint">Automatic bilingual English/Kannada detection with live translation</span>
+                </div>
+              </div>
+
+              <!-- Live Translation Preview Drawer -->
+              <div id="complaint-translation-preview" class="mb-3" style="display: none;"></div>
+
+              <div class="grid-2 gap-3">
+                <div class="form-group">
+                  <label class="form-label">Grievance Subject / Title *</label>
+                  <input type="text" id="complaint-title" class="form-input" placeholder="e.g. UPI online fraud / ರಸ್ತೆ ಗುಂಡಿ ದುರಸ್ತಿ" required maxlength="100" oninput="Citizen.onGrievanceInputChange();">
+                  <span class="input-hint">Enter in English or Kannada (ಕನ್ನಡ)</span>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Complaint Category *</label>
+                  <select id="complaint-category" class="form-select" required onchange="Citizen.onCategoryChange(this.value)">
+                    <option value="">Select Category...</option>
+                    <optgroup label="🚨 Police Department Categories">
+                      <option value="Cybercrime and online fraud">Cybercrime and online fraud (Phishing / UPI Fraud)</option>
+                      <option value="Financial fraud">Financial fraud (Banking scam / Investment fraud)</option>
+                      <option value="Lost property">Lost property (CEIR mobile tracking / Missing IDs)</option>
+                      <option value="Public safety and traffic-related complaints">Public safety and traffic-related complaints</option>
+                      <option value="Complaints involving individuals">Complaints involving individuals (Disputes / Nuisance)</option>
+                    </optgroup>
+                    <optgroup label="🏛️ Civic & Municipal Divisions">
+                      <option value="Drinking Water Supply">Drinking Water Supply & Pipelines</option>
+                      <option value="Road Repair">Road Repair, Potholes & Footpaths</option>
+                      <option value="Streetlights">Streetlights & High-mast Lamps</option>
+                      <option value="Garbage Collection">Garbage Collection & Solid Waste</option>
+                      <option value="Drainage">Drainage Clogging & Stormwater</option>
+                      <option value="Electricity">Electricity & Transformer Issues</option>
+                      <option value="Sanitation">Sanitation & Vector Control</option>
+                      <option value="Other">Other Civic Amenities</option>
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Automated Department Suggestion Preview Banner -->
+              <div id="category-dept-hint"></div>
+
+              <div class="form-group">
+                <div class="flex-between">
+                  <label class="form-label">Detailed Description of Problem *</label>
+                  <span id="char-counter" class="char-counter">0 / 1000</span>
+                </div>
+                <textarea id="complaint-description" class="form-textarea" rows="4" placeholder="Describe the grievance in detail: when did it start, suspects/accused details (if police case), transaction IDs, location clues..." required maxlength="1000" oninput="document.getElementById('char-counter').textContent = `${this.value.length} / 1000`; Citizen.onGrievanceInputChange();"></textarea>
+              </div>
+
+              <div class="grid-3 gap-3">
+                <div class="form-group">
+                  <label class="form-label">Locality / Police Station Area *</label>
+                  <input type="text" id="complaint-locality" class="form-input" placeholder="e.g. North Police Station Circle / Gandhi Gunj" required>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Ward / Division *</label>
+                  <select id="complaint-ward" class="form-select" required>
+                    <option value="Ward 01">Ward 01 - Fort & Old City</option>
+                    <option value="Ward 02">Ward 02 - Shivnagar</option>
+                    <option value="Ward 03">Ward 03 - Pratap Nagar</option>
+                    <option value="Ward 04" selected>Ward 04 - Gandhi Gunj</option>
+                    <option value="Ward 05">Ward 05 - Old City Clock Tower</option>
+                    <option value="Ward 06">Ward 06 - Bhavani Nagar</option>
+                    <option value="Ward 07">Ward 07 - Mailoor Cross</option>
+                    <option value="Ward 08">Ward 08 - Mohan Market</option>
+                    <option value="Ward 09">Ward 09 - Chidri</option>
+                    <option value="Ward 10">Ward 10 - Manhalli Road</option>
+                    <option value="Ward 11">Ward 11 - Naubad Industrial</option>
+                    <option value="Ward 12">Ward 12 - Kumbarwada</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Landmark Clue</label>
+                  <input type="text" id="complaint-landmark" class="form-input" placeholder="e.g. Opposite Petrol Bunk / Near Bank Branch">
+                </div>
+              </div>
+
+              <div class="grid-2 gap-3">
+                <div class="form-group">
+                  <label class="form-label">Priority Level *</label>
+                  <select id="complaint-priority" class="form-select">
+                    <option value="Low">Low (Routine maintenance / Non-urgent)</option>
+                    <option value="Medium" selected>Medium (Standard 48-72h follow-up)</option>
+                    <option value="High">High (Impacting multiple citizens / High financial loss)</option>
+                    <option value="Urgent">Urgent (Safety emergency / Active crime)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Date of Incident</label>
+                  <input type="date" id="complaint-date" class="form-input">
+                </div>
+              </div>
+
+              <!-- Attachments Row: Photo Evidence + Physical Document Upload -->
+              <div class="grid-2 gap-3 border-top pt-3">
+                <!-- 1. Photo Evidence -->
+                <div class="form-group">
+                  <label class="form-label">Photo Evidence (JPG / PNG, Max 5MB)</label>
+                  <input type="file" id="complaint-file-input" class="form-input" accept="image/*" onchange="Citizen.handleImageUpload(this)">
+                  <input type="hidden" id="complaint-attachment-url">
+
+                  <!-- Live Image Preview Box -->
+                  <div id="complaint-image-preview-box" class="mt-2 flex-align-center gap-3" style="display: none;">
+                    <img id="complaint-preview-img" src="" alt="Preview" class="evidence-thumb" style="max-height: 80px;">
+                    <button type="button" class="btn btn-danger-outline btn-sm font-10" onclick="Citizen.removeAttachment()">
+                      🗑️ Remove Photo
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 2. Physical Document / PDF / Scanned Petition Upload -->
+                <div class="form-group">
+                  <label class="form-label">Physical Letter / Document Scan (PDF, DOC, Max 10MB)</label>
+                  <input type="file" id="complaint-doc-input" class="form-input" accept=".pdf,.doc,.docx,.jpg,.png" onchange="Citizen.handleDocumentUpload(this)">
+                  <input type="hidden" id="complaint-document-name">
+
+                  <!-- Document Preview Box -->
+                  <div id="complaint-doc-preview-box" class="mt-2 flex-align-center gap-2 p-2 glass-card" style="display: none;">
+                    <span>📄</span>
+                    <span id="complaint-doc-name" class="font-12 text-cyan font-semibold flex-1"></span>
+                    <button type="button" class="btn btn-danger-outline btn-sm py-0 font-10" onclick="Citizen.removeDocument()">
+                      ✕ Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border-top pt-3 flex-between flex-wrap gap-2">
+                <span class="font-11 text-muted">A verifiable Token ID with scheduled follow-up SLA will be generated.</span>
+                <button type="submit" class="btn btn-primary btn-lg">
+                  Submit Grievance →
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <!-- Citizen View: My Complaints -->
+        <div id="view-citizen-complaints" class="view-panel">
+          <div class="section-header flex-between flex-wrap gap-2">
+            <div>
+              <h2 class="section-title">📂 My Grievance Ledger</h2>
+              <p class="section-subtitle">Complete chronological list of complaints lodged by your profile.</p>
+            </div>
+            <span id="citizen-complaints-count" class="badge badge-cyan font-12">0 Records</span>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="glass-panel p-3 mb-3 flex-between flex-wrap gap-2">
+            <div class="flex gap-2 flex-1 flex-wrap">
+              <input type="text" id="citizen-complaint-search" class="form-input font-12" placeholder="Search by ID, title, locality..." style="max-width: 280px;" oninput="Citizen.currentSearch = this.value; Citizen.renderComplaintsList();">
+              
+              <select id="citizen-complaint-filter" class="form-select font-12" style="max-width: 180px;" onchange="Citizen.currentFilter = this.value; Citizen.renderComplaintsList();">
+                <option value="all">All Statuses</option>
+                <option value="active">Active (Open)</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Waiting for Citizen">Waiting Info</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Reopened">Reopened</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+
+            <button class="btn btn-outline btn-sm" onclick="Citizen.resetFilters()">
+              Clear Filters
+            </button>
+          </div>
+
+          <!-- Cards Container -->
+          <div id="citizen-complaints-cards" class="flex-column gap-3">
+            <!-- Rendered by citizen.js -->
+          </div>
+        </div>
+
+        <!-- Citizen View: Track Complaint -->
+        <div id="view-citizen-track" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">🔍 Grievance Lifecycle Tracker</h2>
+            <p class="section-subtitle">Real-time status, department officer assignment, and verification trail.</p>
+          </div>
+
+          <!-- Tracker Search Box -->
+          <div class="glass-panel p-3 mb-4">
+            <div class="flex gap-2">
+              <input type="text" id="tracker-input-id" class="form-input font-14 font-semibold" placeholder="Enter Complaint ID (e.g. GRV-26001)" style="max-width: 380px;">
+              <button class="btn btn-primary" onclick="Citizen.trackComplaint(document.getElementById('tracker-input-id').value)">
+                Search Tracker
+              </button>
+            </div>
+
+            <!-- Quick Suggestion Chips of citizen's complaints -->
+            <div class="mt-2 flex-align-center gap-2 flex-wrap font-11 text-muted">
+              <span>Quick Select:</span>
+              <span class="complaint-token pointer" onclick="Citizen.trackComplaint('GRV-26001')">GRV-26001</span>
+              <span class="complaint-token pointer" onclick="Citizen.trackComplaint('GRV-26008')">GRV-26008 (Reopened)</span>
+              <span class="complaint-token pointer" onclick="Citizen.trackComplaint('GRV-26002')">GRV-26002 (Resolved)</span>
+            </div>
+          </div>
+
+          <!-- Interactive Tracking Output Container -->
+          <div id="tracking-detail-container">
+            <div class="empty-state-box glass-panel">
+              <div class="empty-icon font-24">🔍</div>
+              <h3>Enter a Grievance ID</h3>
+              <p class="text-muted">Type your token number above or pick a sample complaint to inspect live stages.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Citizen View: Notifications -->
+        <div id="view-citizen-notifications" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title">🔔 Notification Inbox</h2>
+              <p class="section-subtitle">Timely updates regarding status transitions and remarks.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="Notifications.markAllAsRead(Auth.getCurrentUser())">
+              Mark All as Read
+            </button>
+          </div>
+
+          <div id="citizen-notifications-list" class="flex-column gap-2">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+
+        <!-- Citizen View: Feedback -->
+        <div id="view-citizen-feedback" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">⭐ Grievance Feedback & Citizen Ratings</h2>
+            <p class="section-subtitle">Your satisfaction score directly impacts municipal officer performance ratings.</p>
+          </div>
+
+          <div class="glass-panel p-4 mb-4">
+            <h3 class="font-14 font-semibold mb-2">Resolved Grievances Awaiting Citizen Feedback</h3>
+            <div id="citizen-feedback-queue">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Citizen View: Profile -->
+        <div id="view-citizen-profile" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">👤 Citizen Account Profile</h2>
+            <p class="section-subtitle">Manage registered resident details and locality ward.</p>
+          </div>
+
+          <div class="grid-2 gap-3" style="max-width: 800px;">
+            <div class="glass-panel p-4">
+              <h3 class="font-14 font-semibold mb-3">Resident Information</h3>
+              <form onsubmit="event.preventDefault(); CitizenProfile.saveProfile();">
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" id="prof-cit-name" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <input type="text" id="prof-cit-phone" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Default Municipal Ward</label>
+                  <input type="text" id="prof-cit-ward" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Locality / Address</label>
+                  <input type="text" id="prof-cit-locality" class="form-input">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save Profile Updates</button>
+              </form>
+            </div>
+
+            <div class="glass-panel p-4">
+              <h3 class="font-14 font-semibold mb-3">Change Demo Password</h3>
+              <form onsubmit="event.preventDefault(); CitizenProfile.changePassword();">
+                <div class="form-group">
+                  <label class="form-label">Current Password</label>
+                  <input type="password" id="prof-cit-old-pass" class="form-input" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">New Password</label>
+                  <input type="password" id="prof-cit-new-pass" class="form-input" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-outline btn-sm">Update Password</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Citizen View: Help & Support -->
+        <div id="view-citizen-help" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">💡 Help, Support & FAQs</h2>
+            <p class="section-subtitle">Bidar City Municipal Corporation Grievance Redressal Guidance.</p>
+          </div>
+
+          <div class="grid-2 gap-3">
+            <div class="glass-panel p-4">
+              <h3 class="font-14 font-semibold mb-3">Frequently Asked Questions</h3>
+              <div class="flex-column gap-3 font-13">
+                <div>
+                  <strong>Q: How long does it take for a complaint to be resolved?</strong>
+                  <p class="text-muted mt-1">Resolution timelines depend on category SLAs: Streetlights & Sanitation (24-48 hours), Water Supply (72 hours), Road Repair (5 business days).</p>
+                </div>
+                <div>
+                  <strong>Q: What if the issue is marked resolved but still broken?</strong>
+                  <p class="text-muted mt-1">Click the "Reopen" button on the tracker within 7 days. This flags the case to the Municipal Commissioner for direct oversight.</p>
+                </div>
+                <div>
+                  <strong>Q: How do reminders work?</strong>
+                  <p class="text-muted mt-1">If a complaint breaches its target SLA, the system automatically fires escalation alerts to the department officer and the Commissioner.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-panel p-4">
+              <h3 class="font-14 font-semibold mb-3">Emergency Helplines</h3>
+              <div class="flex-column gap-2 font-13">
+                <div class="p-2 glass-card"><strong>CMC Bidar 24x7 Control Room:</strong> 08482-226600</div>
+                <div class="p-2 glass-card"><strong>Electricity Emergency (GESCOM):</strong> 1912</div>
+                <div class="p-2 glass-card"><strong>Drinking Water Emergency:</strong> 1800-425-0012</div>
+                <div class="p-2 glass-card"><strong>Ambulance & Fire Services:</strong> 112 / 108</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ======================================================== -->
+        <!-- OFFICER VIEWS                                            -->
+        <!-- ======================================================== -->
+
+        <!-- Officer View: Overview -->
+        <div id="view-officer-overview" class="view-panel">
+          <div class="section-header flex-between flex-wrap gap-2">
+            <div>
+              <h2 class="section-title">
+                Officer Desk: <span id="officer-greeting-name" class="text-purple">Officer</span> ⚡
+              </h2>
+              <p class="section-subtitle" id="officer-role-title">Department Engineer Workspace</p>
+            </div>
+            <button class="btn btn-purple btn-sm" onclick="App.navigateTo('officer-assigned')">
+              View Assigned Queue →
+            </button>
+          </div>
+
+          <!-- Overdue Warning Banner -->
+          <div id="officer-overdue-banner" class="alert alert-danger mb-3" style="display: none;"></div>
+
+          <!-- Officer KPI Stats Grid -->
+          <div class="kpi-grid">
+            <div class="kpi-card glass-panel" style="--card-accent: var(--officer-purple); cursor: pointer;" onclick="Officer.showAllAssigned()" title="Click to view all assigned cases">
+              <div class="kpi-header">
+                <span class="kpi-title">Assigned Cases</span>
+                <span class="kpi-icon-wrap text-purple">📋</span>
+              </div>
+              <div id="officer-stat-assigned" class="kpi-value text-purple">0</div>
+              <div class="kpi-footer">Total cases on your desk →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #06b6d4; cursor: pointer;" onclick="Officer.showNewAssignments()" title="Click to triage new cases">
+              <div class="kpi-header">
+                <span class="kpi-title">New Triage</span>
+                <span class="kpi-icon-wrap text-cyan">📥</span>
+              </div>
+              <div id="officer-stat-new" class="kpi-value text-cyan">0</div>
+              <div class="kpi-footer">Requires initial inspection →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #f59e0b; cursor: pointer;" onclick="Officer.showInProgressQueue()" title="Click to view in-progress works">
+              <div class="kpi-header">
+                <span class="kpi-title">In Progress</span>
+                <span class="kpi-icon-wrap text-orange">⚙️</span>
+              </div>
+              <div id="officer-stat-progress" class="kpi-value text-orange">0</div>
+              <div class="kpi-footer">Active ground repair work →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #ef4444; cursor: pointer;" onclick="Officer.showOverdueQueue()" title="Click to resolve SLA breaches">
+              <div class="kpi-header">
+                <span class="kpi-title">Overdue Cases</span>
+                <span class="kpi-icon-wrap text-danger">⚠️</span>
+              </div>
+              <div id="officer-stat-overdue" class="kpi-value text-danger">0</div>
+              <div class="kpi-footer">Target SLA breached →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #10b981; cursor: pointer;" onclick="Officer.showResolvedQueue()" title="Click to view resolution history">
+              <div class="kpi-header">
+                <span class="kpi-title">Resolved</span>
+                <span class="kpi-icon-wrap text-emerald">✅</span>
+              </div>
+              <div id="officer-stat-resolved" class="kpi-value text-emerald">0</div>
+              <div class="kpi-footer">Finished & closed cases →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #ec4899; cursor: pointer;" onclick="Officer.syncFilterUi('waiting', '⏳ Waiting for Citizen Details', 'Complaints where clarifying information has been requested from the citizen.')" title="Click to view awaiting citizen responses">
+              <div class="kpi-header">
+                <span class="kpi-title">Waiting Citizen</span>
+                <span class="kpi-icon-wrap text-pink">⏳</span>
+              </div>
+              <div id="officer-stat-waiting" class="kpi-value text-pink">0</div>
+              <div class="kpi-footer">Info requested from citizen →</div>
+            </div>
+          </div>
+
+          <!-- Officer Recent Cases Table -->
+          <div class="glass-panel p-3">
+            <div class="flex-between mb-3">
+              <h3 class="font-14 font-semibold">Priority Cases Requiring Action</h3>
+              <button class="btn btn-outline btn-sm" onclick="App.navigateTo('officer-assigned')">Open Full Ledger →</button>
+            </div>
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Grievance ID</th>
+                    <th>Issue & Ward</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>SLA Countdown</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="officer-recent-tbody">
+                  <!-- Populated via officer.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Officer View: Assigned Complaints Table -->
+        <div id="view-officer-assigned" class="view-panel">
+          <div class="section-header flex-between flex-wrap gap-2">
+            <div>
+              <h2 class="section-title" id="officer-assigned-title">📋 Assigned Grievance Queue</h2>
+              <p class="section-subtitle" id="officer-assigned-subtitle">Exclusively isolated to your designated department and engineer ID.</p>
+            </div>
+            <span id="officer-assigned-count" class="badge badge-purple font-12">0 Cases</span>
+          </div>
+
+          <!-- Search & Filter bar -->
+          <div class="glass-panel p-3 mb-3 flex-between flex-wrap gap-2">
+            <div class="flex gap-2 flex-1 flex-wrap">
+              <input type="text" class="form-input font-12" placeholder="Search assigned cases..." style="max-width: 280px;" oninput="Officer.currentSearch = this.value; Officer.renderComplaintsList();">
+              
+              <select id="officer-filter-status" class="form-select font-12" style="max-width: 220px;" onchange="Officer.currentFilter = this.value; Officer.renderComplaintsList();">
+                <option value="all">All Statuses</option>
+                <option value="new">New Assignments</option>
+                <option value="inprogress">In Progress</option>
+                <option value="overdue">Overdue Follow-ups</option>
+                <option value="unattended">⚠️ Unattended (>48h)</option>
+                <option value="police">🚨 Police Pilot Cases</option>
+                <option value="waiting">Waiting for Citizen</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="glass-panel p-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>ID & Channel</th>
+                    <th>Title & Complainant</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Follow-up Radar</th>
+                    <th>SLA Target</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="officer-complaints-table-body">
+                  <!-- Populated via officer.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Officer View: Notifications -->
+        <div id="view-officer-notifications" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title">🔔 Officer Notifications & Overdue Alerts</h2>
+              <p class="section-subtitle">Assignments, follow-up reminders, and citizen replies.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="Notifications.markAllAsRead(Auth.getCurrentUser())">
+              Mark All Read
+            </button>
+          </div>
+
+          <div id="officer-notifications-list" class="flex-column gap-2">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+
+        <!-- Officer View: Profile -->
+        <div id="view-officer-profile" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">👷 Department Officer Profile</h2>
+            <p class="section-subtitle">Municipal engineering credentials and workload dispatch metrics.</p>
+          </div>
+
+          <div class="glass-panel p-4" style="max-width: 600px;">
+            <div class="flex-align-center gap-3 mb-4 pb-3 border-bottom">
+              <span class="user-avatar-mini" style="width: 52px; height: 52px; font-size: 1.8rem;">⚡</span>
+              <div>
+                <h3 class="font-16 font-semibold" id="officer-prof-name">Eng. Suresh Biradar</h3>
+                <span class="badge badge-purple" id="officer-prof-dept">DEP-ELE • Electrical Works</span>
+              </div>
+            </div>
+
+            <div class="flex-column gap-3 font-13">
+              <div><strong>Designation:</strong> Assistant Executive Engineer (AEE)</div>
+              <div><strong>Jurisdiction:</strong> Bidar City CMC Division 1 (North Wards)</div>
+              <div><strong>Official Email:</strong> officer@grievancetrack.demo</div>
+              <div><strong>Official Phone:</strong> +91 94481 23456</div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ======================================================== -->
+        <!-- ADMIN VIEWS                                              -->
+        <!-- ======================================================== -->
+
+        <!-- Admin View: Overview -->
+        <div id="view-admin-overview" class="view-panel">
+          <div class="section-header flex-between flex-wrap gap-2">
+            <div>
+              <h2 class="section-title">
+                🏛️ Municipal Commissioner Control Desk
+              </h2>
+              <p class="section-subtitle">Real-time governance oversight, department performance, and escalation monitor.</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-primary btn-sm" onclick="Admin.openAddOfficerModal()">
+                ➕ Add New Officer
+              </button>
+              <button class="btn btn-cyan btn-sm" onclick="App.navigateTo('admin-unassigned')">
+                ⚡ Unassigned Queue
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="Reports.exportComplaintsCsv()">
+                📥 Export CSV
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="Reports.printExecutiveReport()">
+                🖨️ Print Summary
+              </button>
+            </div>
+          </div>
+
+          <!-- Admin Macro KPIs -->
+          <div class="kpi-grid">
+            <div class="kpi-card glass-panel" style="--card-accent: var(--citizen-cyan);">
+              <div class="kpi-header">
+                <span class="kpi-title">Total Grievances</span>
+                <span class="kpi-icon-wrap text-cyan">📁</span>
+              </div>
+              <div id="admin-stat-total" class="kpi-value text-cyan">0</div>
+              <div class="kpi-footer">All logged complaints</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #3b82f6;">
+              <div class="kpi-header">
+                <span class="kpi-title">Registered Citizens</span>
+                <span class="kpi-icon-wrap text-cyan">👥</span>
+              </div>
+              <div id="admin-stat-citizens" class="kpi-value">0</div>
+              <div class="kpi-footer">Active resident users</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #8b5cf6; cursor: pointer;" onclick="App.navigateTo('admin-officers')" title="Click to view and manage departmental officers">
+              <div class="kpi-header">
+                <span class="kpi-title">Officers on Duty</span>
+                <span class="kpi-icon-wrap text-purple">👷</span>
+              </div>
+              <div id="admin-stat-officers" class="kpi-value text-purple">0</div>
+              <div class="kpi-footer">Across municipal departments</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #10b981;">
+              <div class="kpi-header">
+                <span class="kpi-title">Departments</span>
+                <span class="kpi-icon-wrap text-emerald">🏢</span>
+              </div>
+              <div id="admin-stat-depts" class="kpi-value text-emerald">0</div>
+              <div class="kpi-footer">Active service divisions</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #f59e0b; cursor: pointer;" onclick="App.navigateTo('admin-unassigned')" title="Click to view unassigned grievances">
+              <div class="kpi-header">
+                <span class="kpi-title">Pending Allocation</span>
+                <span class="kpi-icon-wrap text-orange">📥</span>
+              </div>
+              <div id="admin-stat-pending" class="kpi-value text-orange">0</div>
+              <div class="kpi-footer">Submitted / Under Review →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #8b5cf6; cursor: pointer;" onclick="Admin.filterByStatusAndNavigate('In Progress')" title="Click to view active in-progress complaints">
+              <div class="kpi-header">
+                <span class="kpi-title">In Progress</span>
+                <span class="kpi-icon-wrap text-purple">⚙️</span>
+              </div>
+              <div id="admin-stat-inprogress" class="kpi-value text-purple">0</div>
+              <div class="kpi-footer">Under active ground resolution →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #ef4444; cursor: pointer;" onclick="App.navigateTo('admin-escalations')" title="Click to view overdue cases">
+              <div class="kpi-header">
+                <span class="kpi-title">Overdue Cases</span>
+                <span class="kpi-icon-wrap text-danger">⚠️</span>
+              </div>
+              <div id="admin-stat-overdue" class="kpi-value text-danger">0</div>
+              <div class="kpi-footer">Resolution deadline breached →</div>
+            </div>
+
+            <div class="kpi-card glass-panel" style="--card-accent: #ec4899; cursor: pointer;" onclick="App.navigateTo('admin-escalations')" title="Click to view escalations desk">
+              <div class="kpi-header">
+                <span class="kpi-title">Escalated Cases</span>
+                <span class="kpi-icon-wrap text-pink">🚨</span>
+              </div>
+              <div id="admin-stat-escalated" class="kpi-value text-pink">0</div>
+              <div class="kpi-footer">Overdue >48h breaches →</div>
+            </div>
+          </div>
+
+          <!-- Unassigned Quick Preview & Escalations Queue -->
+          <div class="grid-2 gap-3 mb-4">
+            <div class="glass-panel p-3">
+              <div class="flex-between mb-2">
+                <h3 class="font-14 font-semibold text-cyan">⚡ Unassigned Grievance Queue</h3>
+                <a href="javascript:void(0)" onclick="App.navigateTo('admin-unassigned')" class="text-link font-11">View All →</a>
+              </div>
+              <div class="table-responsive">
+                <table class="gt-table font-12">
+                  <thead>
+                    <tr>
+                      <th>Token</th>
+                      <th>Title</th>
+                      <th>Category</th>
+                      <th>Priority</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-unassigned-tbody">
+                    <!-- Populated via admin.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="glass-panel p-3">
+              <div class="flex-between mb-2">
+                <h3 class="font-14 font-semibold text-danger">🚨 Escalation & Overdue Desk</h3>
+                <a href="javascript:void(0)" onclick="App.navigateTo('admin-escalations')" class="text-link font-11">View Desk →</a>
+              </div>
+              <div class="table-responsive">
+                <table class="gt-table font-12">
+                  <thead>
+                    <tr>
+                      <th>Token</th>
+                      <th>Issue & Ward</th>
+                      <th>Assigned To</th>
+                      <th>Status</th>
+                      <th>Urgency</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-escalations-tbody">
+                    <!-- Populated via admin.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- HTML5 Canvas Visualizations Grid -->
+          <div class="grid-2 gap-3 mb-4">
+            <div class="glass-panel p-3">
+              <h3 class="font-14 font-semibold mb-2">Grievance Distribution by Category</h3>
+              <canvas id="chart-category" height="260"></canvas>
+            </div>
+
+            <div class="glass-panel p-3">
+              <h3 class="font-14 font-semibold mb-2">Departmental Allocation</h3>
+              <canvas id="chart-department" height="260"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: All Complaints Ledger -->
+        <div id="view-admin-all-complaints" class="view-panel">
+          <div class="section-header flex-between flex-wrap gap-2">
+            <div>
+              <h2 class="section-title">📑 Master Grievance Ledger</h2>
+              <p class="section-subtitle">Full searchable, auditable ledger of all registered complaints across Bidar.</p>
+            </div>
+            <div class="flex gap-2">
+              <span id="admin-complaints-count" class="badge badge-info font-12">0 Records</span>
+              <button class="btn btn-outline btn-sm" onclick="Reports.exportComplaintsCsv()">
+                📥 Export CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Comprehensive Multi-Filter Bar -->
+          <div class="glass-panel p-3 mb-3">
+            <div class="grid-4 gap-2 mb-2">
+              <input type="text" id="filter-complaint-search" class="form-input font-12" placeholder="Search ID, citizen, title, locality..." oninput="Admin.applyComplaintFilters()">
+              
+              <select id="filter-complaint-cat" class="form-select font-12" onchange="Admin.applyComplaintFilters()">
+                <option value="all">All Categories</option>
+                <optgroup label="🚨 Police Department Jurisdiction">
+                  <option value="Cybercrime and online fraud">Cybercrime and online fraud</option>
+                  <option value="Financial fraud">Financial fraud</option>
+                  <option value="Lost property">Lost property</option>
+                  <option value="Public safety and traffic-related complaints">Public safety and traffic complaints</option>
+                  <option value="Complaints involving individuals">Complaints involving individuals</option>
+                </optgroup>
+                <optgroup label="🏛️ Civic Utilities">
+                  <option value="Water Supply">Drinking Water Supply</option>
+                  <option value="Road Repair">Road Repair</option>
+                  <option value="Streetlights">Streetlights</option>
+                  <option value="Garbage Collection">Garbage Collection</option>
+                  <option value="Drainage">Drainage</option>
+                  <option value="Electricity">Electricity</option>
+                  <option value="Sanitation">Sanitation</option>
+                </optgroup>
+              </select>
+
+              <select id="filter-complaint-status" class="form-select font-12" onchange="Admin.applyComplaintFilters()">
+                <option value="all">All Statuses</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Assigned">Assigned</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Waiting for Citizen">Waiting Info</option>
+                <option value="Resolved">Resolved</option>
+                <option value="Closed">Closed</option>
+                <option value="Reopened">Reopened</option>
+                <option value="overdue">Overdue Only</option>
+              </select>
+
+              <select id="filter-complaint-priority" class="form-select font-12" onchange="Admin.applyComplaintFilters()">
+                <option value="all">All Priorities</option>
+                <option value="Urgent">Urgent</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+
+            <div class="grid-4 gap-2">
+              <select id="filter-complaint-channel" class="form-select font-12" onchange="Admin.applyComplaintFilters()">
+                <option value="all">All Intake Channels</option>
+                <option value="Online Portal">🌐 Online Portal</option>
+                <option value="Physical Document">📄 Physical Document</option>
+                <option value="Helpline 112">📞 Helpline 112</option>
+                <option value="Email Desk">✉️ Email Desk</option>
+              </select>
+
+              <select id="filter-complaint-domain" class="form-select font-12" onchange="Admin.applyComplaintFilters()">
+                <option value="all">All Pilot & Civic Domains</option>
+                <option value="police">🚨 Police Department Jurisdiction</option>
+                <option value="civic">🏛️ Civic / Municipal Utilities</option>
+              </select>
+
+              <select id="filter-complaint-ward" class="form-select font-12" onchange="Admin.applyComplaintFilters()">
+                <option value="all">All Municipal Wards</option>
+                <option value="Ward 01">Ward 01</option>
+                <option value="Ward 02">Ward 02</option>
+                <option value="Ward 03">Ward 03</option>
+                <option value="Ward 04">Ward 04</option>
+                <option value="Ward 05">Ward 05</option>
+                <option value="Ward 06">Ward 06</option>
+                <option value="Ward 07">Ward 07</option>
+                <option value="Ward 08">Ward 08</option>
+                <option value="Ward 09">Ward 09</option>
+                <option value="Ward 11">Ward 11</option>
+              </select>
+
+              <div class="flex gap-1">
+                <select id="filter-complaint-officer" class="form-select font-12 flex-1" onchange="Admin.applyComplaintFilters()">
+                  <option value="all">All Officers</option>
+                  <option value="unassigned">Unassigned Only</option>
+                  <option value="USR-OFF-001">SI Suresh Biradar (Police)</option>
+                  <option value="USR-OFF-002">Insp. Sneha Patil (Cyber)</option>
+                  <option value="USR-OFF-003">Insp. M. Farhan (Traffic)</option>
+                  <option value="USR-OFF-004">Anand Kulkarni (Water)</option>
+                  <option value="USR-OFF-005">Pooja Shinde (Sanitation)</option>
+                </select>
+
+                <button class="btn btn-outline btn-sm font-11" onclick="Admin.resetComplaintFilters()">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- All Complaints Ledger Table -->
+          <div class="glass-panel p-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Grievance ID</th>
+                    <th>Citizen & Title</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assigned Desk</th>
+                    <th>Follow-up Radar</th>
+                    <th>SLA Target</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-complaints-tbody">
+                  <!-- Populated via admin.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: Unassigned Cases -->
+        <div id="view-admin-unassigned" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">⚡ Unassigned Grievance Allocation Queue</h2>
+            <p class="section-subtitle">Newly submitted citizen complaints awaiting officer allocation and service timeline setting.</p>
+          </div>
+
+          <div class="glass-panel p-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Grievance ID</th>
+                    <th>Issue Title</th>
+                    <th>Category</th>
+                    <th>Ward & Locality</th>
+                    <th>Priority</th>
+                    <th>Date Filed</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-unassigned-queue-tbody">
+                  <!-- Dynamically rendered -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: Officer Management -->
+        <div id="view-admin-officers" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title">👷 Department Officer Directory & Workload</h2>
+              <p class="section-subtitle">Manage departmental personnel, workload assignments, and account statuses.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="Admin.openAddOfficerModal()">
+              ➕ Add New Officer
+            </button>
+          </div>
+
+          <div class="glass-panel p-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Officer</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Phone</th>
+                    <th>Active Workload</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-officers-tbody">
+                  <!-- Populated via admin.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: Citizen Management -->
+        <div id="view-admin-citizens" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">👥 Registered Citizens Directory</h2>
+            <p class="section-subtitle">Manage registered residents, view submitted complaints, and account state.</p>
+          </div>
+
+          <div class="glass-panel p-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Citizen Name & Email</th>
+                    <th>Phone</th>
+                    <th>Registered Ward</th>
+                    <th>Grievances Lodged</th>
+                    <th>Member Since</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-citizens-tbody">
+                  <!-- Populated via admin.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: Department Management -->
+        <div id="view-admin-departments" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">🏢 Municipal Departments & SLA Timelines</h2>
+            <p class="section-subtitle">Configure department service guarantees (SLA days) and category mappings.</p>
+          </div>
+
+          <div class="glass-panel p-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Dept Code</th>
+                    <th>Department Name & Responsibility</th>
+                    <th>Target SLA</th>
+                    <th>Divisional Head</th>
+                    <th>Category Handled</th>
+                    <th>Total Cases</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-departments-tbody">
+                  <!-- Populated via admin.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: Overdue & Escalation Desk -->
+        <div id="view-admin-escalations" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title text-danger">🚨 Escalation & Chronic Delay Desk</h2>
+              <p class="section-subtitle">Complaints that have breached service level commitments or received repeated reminders.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="Reminders.runCheck(true)">
+              ⏰ Run Reminder Check Now
+            </button>
+          </div>
+
+          <div class="glass-panel p-3 mb-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Token ID</th>
+                    <th>Title & Locality</th>
+                    <th>Assigned Officer</th>
+                    <th>Status</th>
+                    <th>Reminders</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-escalations-desk-tbody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: Smart Reminder System Control Panel -->
+        <div id="view-admin-reminders" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title">⏰ Smart Follow-Up Reminder Engine</h2>
+              <p class="section-subtitle">Automated background decision rules, grace periods, and escalation thresholds.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="Reminders.runCheck(true)">
+              ⚡ Run Reminder Check Now
+            </button>
+          </div>
+
+          <div class="grid-3 gap-3 mb-4">
+            <div class="glass-panel p-3">
+              <span class="font-11 text-muted text-uppercase">Tier 1 Rule</span>
+              <h4 class="font-14 font-semibold text-cyan mt-1">Due Date Passed</h4>
+              <p class="font-12 text-slate-300 mt-2">Immediately triggers Level 1 in-app alert to the assigned officer.</p>
+            </div>
+
+            <div class="glass-panel p-3">
+              <span class="font-11 text-muted text-uppercase">Tier 2 Rule</span>
+              <h4 class="font-14 font-semibold text-orange mt-1">Overdue &gt; 24h Window</h4>
+              <p class="font-12 text-slate-300 mt-2">Second reminder dispatched. Duplicate guard ensures 1 alert per 24 hours.</p>
+            </div>
+
+            <div class="glass-panel p-3">
+              <span class="font-11 text-muted text-uppercase">Tier 3 Rule</span>
+              <h4 class="font-14 font-semibold text-pink mt-1">Overdue &gt; 48h Escalation</h4>
+              <p class="font-12 text-slate-300 mt-2">Flags case as Escalated and notifies Municipal Commissioner desk.</p>
+            </div>
+          </div>
+
+          <div class="glass-panel p-4 text-center">
+            <h3 class="font-16 font-semibold mb-2">Simulate Live Automated Reminder Scan</h3>
+            <p class="font-13 text-muted mb-3" style="max-width: 600px; margin: 0 auto;">
+              Click below to trigger an immediate scan of all open complaints against current system time. The engine checks due dates, calculates delays, and generates role notifications.
+            </p>
+            <button class="btn btn-primary btn-lg" onclick="Reminders.runCheck(true)">
+              🚀 Execute Reminder Engine Check Now
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin View: Analytics & Reports -->
+        <div id="view-admin-analytics" class="view-panel">
+          <div class="section-header flex-between flex-wrap gap-2">
+            <div>
+              <h2 class="section-title">📈 Advanced Municipal Analytics & Interactive Ward Map</h2>
+              <p class="section-subtitle">Data visualization, officer workload comparison, and ward concentration.</p>
+            </div>
+            <div class="flex gap-2">
+              <select id="analytics-time-filter" class="form-select font-12" style="max-width: 150px;" onchange="Analytics.renderDashboard(this.value)">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="7days">Last 7 Days</option>
+                <option value="30days">Last 30 Days</option>
+                <option value="6months">Last 6 Months</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="Reports.exportComplaintsCsv()">
+                📥 Export CSV
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="Reports.printExecutiveReport()">
+                🖨️ Print Report
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Ward Map / Locality Heatmap (Locally generated without Map API) -->
+          <div class="glass-panel p-4 mb-4">
+            <div class="flex-between">
+              <div>
+                <h3 class="font-14 font-semibold">Interactive Municipal Ward Heatmap</h3>
+                <span class="font-11 text-muted">Click any ward cell to filter complaints ledger automatically</span>
+              </div>
+              <div class="flex gap-2 font-11">
+                <span class="badge badge-info">Low</span>
+                <span class="badge badge-warning">Medium</span>
+                <span class="badge badge-danger">High / Overdue</span>
+              </div>
+            </div>
+            <div id="ward-heatmap-container">
+              <!-- Rendered via analytics.js -->
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Trends & Satisfaction -->
+          <div class="grid-2 gap-3 mb-4">
+            <div class="glass-panel p-3">
+              <h3 class="font-14 font-semibold mb-2">7-Day Submission Volume Trend Curve</h3>
+              <canvas id="chart-trends" height="240"></canvas>
+            </div>
+
+            <div class="glass-panel p-3">
+              <h3 class="font-14 font-semibold mb-2">Citizen Satisfaction Index (Sakalya CSAT)</h3>
+              <canvas id="chart-satisfaction" height="240"></canvas>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Officer Workload -->
+          <div class="glass-panel p-3 mb-4">
+            <h3 class="font-14 font-semibold mb-2">Officer Workload & Resolution Comparison</h3>
+            <canvas id="chart-officer-workload" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- Admin View: Notification Center -->
+        <div id="view-admin-notifications" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title">🔔 Administrator Notification Center</h2>
+              <p class="section-subtitle">Real-time alerts for citizen submissions, escalations, and overdue cases.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="Notifications.markAllAsRead(Auth.getCurrentUser())">
+              Mark All Read
+            </button>
+          </div>
+
+          <div id="admin-notifications-list" class="flex-column gap-2">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+
+        <!-- Admin View: Audit Logs -->
+        <div id="view-admin-audit" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title">🛡️ Security & Action Audit Trail</h2>
+              <p class="section-subtitle">Immutable chronological log of all logins, submissions, assignments, and status changes.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="Reports.exportComplaintsCsv()">
+              Export Audit Trail
+            </button>
+          </div>
+
+          <div class="glass-panel p-3">
+            <div class="table-responsive">
+              <table class="gt-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User & Role</th>
+                    <th>Action</th>
+                    <th>Grievance Token</th>
+                    <th>Audit Description</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-audit-tbody">
+                  <!-- Populated via admin.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: SQL Database Explorer -->
+        <div id="view-admin-database" class="view-panel">
+          <div class="section-header flex-between">
+            <div>
+              <h2 class="section-title">💾 In-Browser Relational SQL Database Explorer</h2>
+              <p class="section-subtitle">Pure JavaScript 3NF Normalized Engine with IndexedDB binary persistence, live query execution, and SQL export.</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn btn-outline btn-sm" onclick="Admin.resetDatabaseWithConfirm()" title="Restore pristine database state from seed.sql">
+                <span>🔄</span> Reset Database
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="DB.downloadDumpFile()" title="Download complete .sql dump file for viva evaluation">
+                <span>📥</span> Export .SQL Dump
+              </button>
+            </div>
+          </div>
+
+          <!-- Relational Schema Tables (3NF Normalization) -->
+          <div class="mb-4">
+            <div class="flex-between mb-2">
+              <h3 class="font-14 font-semibold text-slate-200">Relational Schema Tables (3NF Normalized)</h3>
+              <span class="font-11 text-muted">Click any table to prefill query</span>
+            </div>
+            <div id="admin-db-tables-grid" class="grid-4 gap-3">
+              <!-- Rendered via Admin.renderDatabaseExplorer() -->
+            </div>
+          </div>
+
+          <!-- Interactive SQL Query Console -->
+          <div class="glass-panel p-4" id="sql-console-panel">
+            <div class="flex-between mb-2 flex-wrap gap-2">
+              <div class="flex-align-center gap-2">
+                <span class="font-18">⚡</span>
+                <h3 class="font-15 font-semibold text-cyan">Interactive SQL Query Console</h3>
+                <span class="badge badge-purple font-10">Real Relational Engine</span>
+                <span class="badge badge-emerald font-10">IndexedDB Persisted</span>
+              </div>
+              <div class="font-11 text-muted">Supports SELECT, JOIN, GROUP BY, WHERE, ORDER BY, INSERT, UPDATE, DELETE</div>
+            </div>
+
+            <!-- Quick Query Suggestion Pills -->
+            <div class="mb-3">
+              <div class="font-11 text-muted mb-1">Quick Sample SQL Queries (Click to execute):</div>
+              <div class="flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-xs btn-outline font-11" onclick="Admin.prefillSql('SELECT c.complaint_id, c.title, c.category, c.status, c.priority, d.dept_name, u.full_name AS citizen_name\nFROM complaints c\nLEFT JOIN departments d ON c.dept_id = d.dept_id\nLEFT JOIN users u ON c.citizen_id = u.user_id\nLIMIT 15;')">
+                  🔗 All Complaints with Dept & Citizen (JOIN)
+                </button>
+                <button type="button" class="btn btn-xs btn-outline font-11" onclick="Admin.prefillSql('SELECT d.dept_name, COUNT(c.complaint_id) AS total_complaints\nFROM departments d\nLEFT JOIN complaints c ON d.dept_id = c.dept_id\nGROUP BY d.dept_name\nORDER BY total_complaints DESC;')">
+                  📊 Department Workload (GROUP BY & COUNT)
+                </button>
+                <button type="button" class="btn btn-xs btn-outline font-11" onclick="Admin.prefillSql('SELECT complaint_id, title, category, priority, status, due_date\nFROM complaints\nWHERE status NOT IN (\'Resolved\', \'Closed\')\nORDER BY due_date ASC;')">
+                  🚨 Active Cases by Due Date (WHERE & ORDER BY)
+                </button>
+                <button type="button" class="btn btn-xs btn-outline font-11" onclick="Admin.prefillSql('SELECT f.feedback_id, f.complaint_id, f.rating, f.comments, u.full_name AS citizen_name, f.created_at\nFROM feedback f\nJOIN users u ON f.citizen_id = u.user_id\nORDER BY f.rating DESC;')">
+                  ⭐ Citizen Feedback & Ratings (JOIN)
+                </button>
+                <button type="button" class="btn btn-xs btn-outline font-11" onclick="Admin.prefillSql('SELECT log_id, user_id, role, action, complaint_id, description, created_at\nFROM audit_logs\nORDER BY log_id DESC\nLIMIT 10;')">
+                  🛡️ Security Audit Trail (ORDER BY DESC)
+                </button>
+                <button type="button" class="btn btn-xs btn-outline font-11" onclick="Admin.prefillSql('SELECT user_id, full_name, email, role, dept_id, phone, status FROM users;')">
+                  👥 All Users & Staff
+                </button>
+              </div>
+            </div>
+
+            <!-- SQL Query Editor -->
+            <div class="form-group mb-3">
+              <textarea id="sql-query-input" class="form-textarea font-mono" rows="4" style="font-size: 13px; line-height: 1.5; background: rgba(15, 23, 42, 0.85); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);" placeholder="Type any valid SQL statement here (e.g. SELECT * FROM complaints WHERE priority = 'Urgent';)..."></textarea>
+            </div>
+
+            <!-- Execution Controls & Status Bar -->
+            <div class="flex-between flex-wrap gap-2 mb-3 pb-3 border-bottom-subtle">
+              <div class="flex gap-2">
+                <button class="btn btn-primary btn-sm" onclick="Admin.executeSqlConsole()">
+                  <span>⚡</span> Run SQL Query
+                </button>
+                <button class="btn btn-outline btn-sm" onclick="Admin.clearSqlConsole()">
+                  Clear
+                </button>
+              </div>
+              <div id="sql-query-status" class="flex-align-center">
+                <span class="text-muted font-12">Ready to execute SQL queries. Click "Run SQL Query ⚡"</span>
+              </div>
+            </div>
+
+            <!-- Results Output -->
+            <div>
+              <div class="flex-between mb-2">
+                <h4 class="font-12 font-semibold text-slate-300">Query Results Table</h4>
+              </div>
+              <div id="sql-results-container">
+                <div class="p-4 text-center text-muted font-12">No query executed yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin View: System Settings -->
+        <div id="view-admin-settings" class="view-panel">
+          <div class="section-header">
+            <h2 class="section-title">⚙️ Portal Settings & Demonstration Controls</h2>
+            <p class="section-subtitle">Visual theme customization, Kannada localization toggle, and data reset.</p>
+          </div>
+
+          <div class="grid-2 gap-3" style="max-width: 820px;">
+            <div class="glass-panel p-4">
+              <h3 class="font-14 font-semibold mb-3">Appearance & UI Controls</h3>
+              
+              <div class="form-group">
+                <label class="form-label">Theme Mode</label>
+                <select id="setting-theme" class="form-select" onchange="App.setTheme(this.value)">
+                  <option value="dark">Luxury Dark Mode (Recommended)</option>
+                  <option value="light">Crisp Light Mode</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Accent Color</label>
+                <select id="setting-accent" class="form-select" onchange="App.setAccentColor(this.value)">
+                  <option value="cyan">Neon Cyan (Citizen Blue)</option>
+                  <option value="purple">Royal Purple (Officer)</option>
+                  <option value="emerald">Cyber Emerald (Admin)</option>
+                  <option value="sunset">Sunset Orange</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Table Density</label>
+                <select id="setting-density" class="form-select" onchange="const s = GTStorage.get(STORAGE_KEYS.SETTINGS) || {}; s.tableDensity = this.value; GTStorage.set(STORAGE_KEYS.SETTINGS, s); App.applySettings();">
+                  <option value="compact">Compact (More data on screen)</option>
+                  <option value="comfortable">Comfortable Spacing</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="flex-align-center gap-2 pointer font-13">
+                  <input type="checkbox" id="setting-sound" checked onchange="const s = GTStorage.get(STORAGE_KEYS.SETTINGS) || {}; s.soundEnabled = this.checked; GTStorage.set(STORAGE_KEYS.SETTINGS, s);">
+                  Enable native offline audio feedback tones
+                </label>
+              </div>
+            </div>
+
+            <div class="glass-panel p-4">
+              <h3 class="font-14 font-semibold mb-3">Viva Demo Scenario Simulators</h3>
+              <p class="font-12 text-muted mb-3">Use these quick triggers during project demonstration to show dynamic behavior:</p>
+              
+              <div class="flex-column gap-2">
+                <button class="btn btn-outline w-100 text-left font-12" onclick="App.simulateTimeJump(3)">
+                  ⏳ <strong>Fast-Forward 3 Days:</strong> Triggers overdue reminder state
+                </button>
+                <button class="btn btn-outline w-100 text-left font-12" onclick="App.simulateNewP1Case()">
+                  🔥 <strong>Generate Urgent P1 Case:</strong> Billowing Transformer Smoke
+                </button>
+                <button class="btn btn-outline w-100 text-left font-12" onclick="Reminders.runCheck(true)">
+                  ⏰ <strong>Manual Reminder Check:</strong> Check overdue SLA rules
+                </button>
+              </div>
+
+              <div class="border-top pt-3 mt-4">
+                <h4 class="font-13 font-semibold text-danger mb-1">Reset Demo Dataset</h4>
+                <p class="font-11 text-muted mb-2">Restores the pristine 24-complaint demo dataset and default demo credentials.</p>
+                <button class="btn btn-danger-outline btn-sm" onclick="App.resetDemoDataConfirm()">
+                  🔄 Restore Initial Demo Dataset
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </section>
+
+
+  <!-- ========================================== -->
+  <!-- 3. MODAL DIALOGS                           -->
+  <!-- ========================================== -->
+
+  <!-- Modal: Citizen Self-Registration -->
+  <div id="modal-register" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Citizen Portal Registration</h3>
+        <button class="modal-close" onclick="Modal.close('modal-register')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Auth.registerCitizen({
+        name: document.getElementById('reg-name').value,
+        email: document.getElementById('reg-email').value,
+        password: document.getElementById('reg-password').value,
+        phone: document.getElementById('reg-phone').value,
+        ward: document.getElementById('reg-ward').value,
+        locality: document.getElementById('reg-locality').value
+      });">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="reg-name" class="form-input" required placeholder="e.g. Ramesh Patil">
+          </div>
+          <div class="grid-2 gap-2">
+            <div class="form-group">
+              <label class="form-label">Email Address *</label>
+              <input type="email" id="reg-email" class="form-input" required placeholder="ramesh@example.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password *</label>
+              <input type="password" id="reg-password" class="form-input" required placeholder="••••••••">
+            </div>
+          </div>
+          <div class="grid-2 gap-2">
+            <div class="form-group">
+              <label class="form-label">Phone Number *</label>
+              <input type="tel" id="reg-phone" class="form-input" required placeholder="+91 94480 00000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Municipal Ward *</label>
+              <select id="reg-ward" class="form-select">
+                <option value="Ward 01">Ward 01 - Fort & Old City</option>
+                <option value="Ward 02">Ward 02 - Shivnagar</option>
+                <option value="Ward 04" selected>Ward 04 - Gandhi Gunj</option>
+                <option value="Ward 08">Ward 08 - Mohan Market</option>
+                <option value="Ward 11">Ward 11 - Naubad</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Locality / Address</label>
+            <input type="text" id="reg-locality" class="form-input" placeholder="e.g. Near Bustand Road">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-register')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Account →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Forgot Password Simulation -->
+  <div id="modal-forgot-password" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Password Recovery Simulation</h3>
+        <button class="modal-close" onclick="Modal.close('modal-forgot-password')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Auth.simulateForgotPassword(document.getElementById('forgot-email').value);">
+        <div class="modal-body">
+          <p class="font-13 text-muted mb-3">Enter your registered email address to receive password reset assistance:</p>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="forgot-email" class="form-input" placeholder="citizen@grievancetrack.demo" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-forgot-password')">Close</button>
+          <button type="submit" class="btn btn-cyan">Reset Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Global Search (Ctrl + K) -->
+  <div id="modal-global-search" class="modal-overlay">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div class="flex-align-center gap-2 flex-1">
+          <span>🔍</span>
+          <input type="text" id="global-search-input" class="form-input font-14" placeholder="Type grievance token (GRV-26001), category, title, locality..." autofocus>
+        </div>
+        <button class="modal-close" onclick="Modal.close('modal-global-search')">✕</button>
+      </div>
+      <div id="global-search-results" class="modal-body p-0" style="max-height: 380px;">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Complaint Assignment -->
+  <div id="modal-admin-assign" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="assign-complaint-heading">Assign Grievance</h3>
+        <button class="modal-close" onclick="Modal.close('modal-admin-assign')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Admin.submitAssignment();">
+        <input type="hidden" id="assign-complaint-id">
+        <div class="modal-body">
+          <div class="alert alert-info py-2 font-11 mb-3">
+            <strong>Citizen:</strong> <span id="assign-citizen-info"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Responsible Municipal Department *</label>
+            <select id="assign-dept-select" class="form-select" onchange="Admin.onAssignDeptChange()" required>
+              <!-- Filled via admin.js -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Designated Department Officer *</label>
+            <select id="assign-officer-select" class="form-select" required>
+              <!-- Filled via admin.js -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Resolution Due Date (SLA Target)</label>
+            <input type="date" id="assign-due-date" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Assignment Directive / Remarks</label>
+            <textarea id="assign-remarks" class="form-textarea" placeholder="Directive to officer regarding site inspection and rectification target..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-admin-assign')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Dispatch Assignment →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Officer Update Status -->
+  <div id="modal-officer-action" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Grievance Action & Status</h3>
+        <button class="modal-close" onclick="Modal.close('modal-officer-action')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Officer.submitAction();">
+        <input type="hidden" id="officer-action-complaint-id">
+        <div class="modal-body">
+          <div class="mb-3">
+            <h4 id="officer-action-title" class="font-14 font-semibold text-cyan"></h4>
+            <div class="flex-align-center gap-2 mt-1">
+              <span class="font-11 text-muted">Current Status:</span>
+              <span id="officer-action-current-status"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Update Status To *</label>
+            <select id="officer-new-status-select" class="form-select" required>
+              <option value="In Progress">In Progress (Field team deployed)</option>
+              <option value="Waiting for Citizen">Waiting for Citizen (Need more info / photo)</option>
+              <option value="Resolved">Resolved (Rectification completed)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Progress Remarks / Resolution Notes *</label>
+            <textarea id="officer-action-remarks" class="form-textarea" rows="4" placeholder="Detail action taken: replaced cable, repaired valve, cleared garbage tipper, etc..." required></textarea>
+            <span class="input-hint">This remark will appear on the citizen's live timeline and municipal audit log.</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-officer-action')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Action →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Schedule Follow-up Action -->
+  <div id="modal-schedule-followup" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="followup-heading" class="modal-title">Schedule Follow-up Action</h3>
+        <button class="modal-close" onclick="Modal.close('modal-schedule-followup')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Officer.submitScheduleFollowUp();">
+        <input type="hidden" id="followup-complaint-id">
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="badge badge-purple font-10 mb-1">SMART FOLLOW-UP RADAR</span>
+            <h4 id="followup-complaint-title" class="font-14 font-semibold text-cyan m-0"></h4>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Action Classification *</label>
+            <select id="followup-action-type" class="form-select" required>
+              <option value="Investigation">🔍 Field Investigation & Site Inspection</option>
+              <option value="Summon Witness">⚖️ Complainant / Witness Verification</option>
+              <option value="Cyber Forensics">💻 Cyber Forensics & IP Log Tracing</option>
+              <option value="Bank Liaison">🏦 Bank Coordination & Account Lien Request</option>
+              <option value="Notice Served">📜 Notice / Summon Dispatched</option>
+              <option value="Contractor Order">🛠️ Engineering Contractor Work Order</option>
+              <option value="Patrol Verification">🚓 Beat Patrol Field Verification</option>
+              <option value="Interim Review">📋 Supervisory Interim Milestone Review</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Next Target Operational Step *</label>
+            <input type="text" id="followup-next-step" class="form-input" placeholder="e.g. Conduct spot inquiry and record witness statement" required>
+            <span class="input-hint">Specific accountable milestone to be achieved by next follow-up date</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Next Follow-up Due Date *</label>
+            <input type="date" id="followup-target-date" class="form-input" required>
+            <span class="input-hint">Reminder engine monitors this target date for automatic reminders and supervisor escalation.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Action Remarks / Progress Notes</label>
+            <textarea id="followup-remarks" class="form-textarea" rows="3" placeholder="Enter notes on preliminary findings, evidence gathered, or coordination steps..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-schedule-followup')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Schedule Action & Reset Alert →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Dossier Viewer -->
+  <div id="modal-dossier-view" class="modal-overlay">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">Official Grievance Dossier</h3>
+        <button class="modal-close" onclick="Modal.close('modal-dossier-view')">✕</button>
+      </div>
+      <div id="modal-dossier-body" class="modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="Modal.close('modal-dossier-view')">Close Dossier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Citizen Feedback & Rating -->
+  <div id="modal-feedback" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">⭐ Citizen Satisfaction Rating</h3>
+        <button class="modal-close" onclick="Modal.close('modal-feedback')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Complaints.submitFeedback(
+        document.getElementById('feedback-complaint-id').value,
+        Citizen.selectedRating,
+        document.getElementById('feedback-comment').value,
+        Auth.getCurrentUser()
+      ); Modal.close('modal-feedback'); Citizen.renderOverview();">
+        <input type="hidden" id="feedback-complaint-id">
+        <div class="modal-body text-center">
+          <h4 id="feedback-complaint-label" class="font-14 font-semibold mb-3"></h4>
+          <p class="font-12 text-muted mb-3">Please rate how satisfactorily your complaint was resolved by the department:</p>
+          
+          <div class="star-rating-row justify-center mb-4" style="display: flex; justify-content: center;">
+            <span class="star-rating-btn selected" data-rating="1" onclick="Citizen.updateStarDisplay(1)">★</span>
+            <span class="star-rating-btn selected" data-rating="2" onclick="Citizen.updateStarDisplay(2)">★</span>
+            <span class="star-rating-btn selected" data-rating="3" onclick="Citizen.updateStarDisplay(3)">★</span>
+            <span class="star-rating-btn selected" data-rating="4" onclick="Citizen.updateStarDisplay(4)">★</span>
+            <span class="star-rating-btn selected" data-rating="5" onclick="Citizen.updateStarDisplay(5)">★</span>
+          </div>
+
+          <div class="form-group text-left">
+            <label class="form-label">Citizen Comments (Optional)</label>
+            <textarea id="feedback-comment" class="form-textarea" placeholder="Was the officer prompt? Is the repair satisfactory?"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-feedback')">Cancel</button>
+          <button type="submit" class="btn btn-success">Submit Feedback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Citizen Reopen Complaint -->
+  <div id="modal-reopen" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title text-danger">⚠️ Reopen Unresolved Grievance</h3>
+        <button class="modal-close" onclick="Modal.close('modal-reopen')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Complaints.reopen(
+        document.getElementById('reopen-complaint-id').value,
+        document.getElementById('reopen-reason').value,
+        Auth.getCurrentUser()
+      ); Modal.close('modal-reopen'); Citizen.renderOverview(); Citizen.renderComplaintsList();">
+        <input type="hidden" id="reopen-complaint-id">
+        <div class="modal-body">
+          <h4 id="reopen-complaint-label" class="font-14 font-semibold mb-2"></h4>
+          <p class="font-12 text-muted mb-3">If the issue remains unresolved or reoccurred, specify the reason. The case will be escalated back to supervisory officers.</p>
+          
+          <div class="form-group">
+            <label class="form-label">Why is the grievance still unresolved? *</label>
+            <textarea id="reopen-reason" class="form-textarea" rows="4" required placeholder="e.g. The leak started again after water pressure returned this morning..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-reopen')">Cancel</button>
+          <button type="submit" class="btn btn-danger">Confirm Reopen Grievance</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add New Officer -->
+  <div id="modal-add-officer" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Department Officer</h3>
+        <button class="modal-close" onclick="Modal.close('modal-add-officer')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Admin.saveNewOfficer();">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Officer Full Name *</label>
+            <input type="text" id="new-officer-name" class="form-input" required placeholder="e.g. Eng. Vikram Joshi">
+          </div>
+          <div class="grid-2 gap-2">
+            <div class="form-group">
+              <label class="form-label">Email Address *</label>
+              <input type="email" id="new-officer-email" class="form-input" required placeholder="officer.joshi@grievancetrack.demo">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password *</label>
+              <input type="password" id="new-officer-password" class="form-input" placeholder="Create temporary password" required>
+            </div>
+          </div>
+          <div class="grid-2 gap-2">
+            <div class="form-group">
+              <label class="form-label">Assigned Department</label>
+              <select id="new-officer-dept" class="form-select">
+                <!-- Populated via admin.js -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Official Phone</label>
+              <input type="tel" id="new-officer-phone" class="form-input" placeholder="+91 94480 00000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Designation / Role Title</label>
+            <input type="text" id="new-officer-title" class="form-input" placeholder="e.g. Assistant Executive Engineer">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-add-officer')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Officer Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Officer -->
+  <div id="modal-edit-officer" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Officer Profile</h3>
+        <button class="modal-close" onclick="Modal.close('modal-edit-officer')">✕</button>
+      </div>
+      <form onsubmit="event.preventDefault(); Admin.saveEditedOfficer();">
+        <input type="hidden" id="edit-officer-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Officer Name</label>
+            <input type="text" id="edit-officer-name" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <select id="edit-officer-dept" class="form-select">
+              <!-- Populated via admin.js -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Designation</label>
+            <input type="text" id="edit-officer-title" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="text" id="edit-officer-phone" class="form-input">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="Modal.close('modal-edit-officer')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Reminder Scan Results Report -->
+  <div id="modal-reminder-report" class="modal-overlay">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title text-cyan">⏰ Automated Reminder Scan Report</h3>
+        <button class="modal-close" onclick="Modal.close('modal-reminder-report')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Rendered dynamically by reminders.js -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="Modal.close('modal-reminder-report')">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Photo Evidence Viewer -->
+  <div id="modal-image-viewer" class="modal-overlay">
+    <div class="modal-dialog modal-lg text-center" style="background: rgba(10,15,25,0.95);">
+      <div class="modal-header border-0">
+        <h3 class="modal-title font-14">Enlarged Photo Evidence</h3>
+        <button class="modal-close" onclick="Modal.close('modal-image-viewer')">✕</button>
+      </div>
+      <div class="modal-body text-center p-3">
+        <img id="image-viewer-full" src="" alt="Evidence" style="max-width: 100%; max-height: 70vh; border-radius: 8px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Printable Area for Official Slips -->
+  <div id="printable-area"></div>
+
+
+  <!-- ========================================== -->
+  <!-- 4. JAVASCRIPT LOGIC SCRIPTS (ORDERED)      -->
+  <!-- ========================================== -->
+  <script src="js/sql-engine.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/utilities.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/assignment.js"></script>
+  <script src="js/complaints.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/citizen.js"></script>
+  <script src="js/officer.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- Inline Helper for Citizen Submission Controller -->
+  <script>
+    const CitizenSubmit = {
+      handleSubmit() {
+        const user = Auth.getCurrentUser();
+        if (!user) return;
+
+        const data = {
+          title: document.getElementById('complaint-title').value,
+          category: document.getElementById('complaint-category').value,
+          description: document.getElementById('complaint-description').value,
+          locality: document.getElementById('complaint-locality').value,
+          ward: document.getElementById('complaint-ward').value,
+          landmark: document.getElementById('complaint-landmark').value,
+          priority: document.getElementById('complaint-priority').value,
+          incidentDate: document.getElementById('complaint-date').value,
+          attachmentUrl: document.getElementById('complaint-attachment-url').value,
+          channel: document.getElementById('complaint-channel')?.value || 'Online Portal',
+          documentName: document.getElementById('complaint-document-name')?.value || null
+        };
+
+        const created = Complaints.submit(data, user);
+        if (created) {
+          Toast.success(`Grievance ${created.id} registered successfully via ${created.channel}!`, 'Registered');
+          
+          // Reset form
+          document.getElementById('form-submit-complaint').reset();
+          Citizen.removeAttachment();
+          Citizen.removeDocument();
+          document.getElementById('category-dept-hint').innerHTML = '';
+          const previewBox = document.getElementById('complaint-translation-preview');
+          if (previewBox) previewBox.style.display = 'none';
+          const badge = document.getElementById('complaint-detected-lang-badge');
+          if (badge) {
+            badge.textContent = 'Auto-Detect (EN / KN)';
+            badge.className = 'badge badge-neutral font-11';
+          }
+
+          // Open confirmation modal or track directly
+          setTimeout(() => {
+            Citizen.trackComplaint(created.id);
+          }, 300);
+        }
+      }
+    };
+
+    const CitizenProfile = {
+      saveProfile() {
+        const user = Auth.getCurrentUser();
+        if (!user) return;
+
+        user.name = document.getElementById('prof-cit-name').value;
+        user.phone = document.getElementById('prof-cit-phone').value;
+        user.ward = document.getElementById('prof-cit-ward').value;
+        user.locality = document.getElementById('prof-cit-locality').value;
+
+        const users = GTStorage.get(STORAGE_KEYS.USERS, []);
+        const idx = users.findIndex(u => u.id === user.id);
+        if (idx !== -1) {
+          users[idx] = user;
+          GTStorage.set(STORAGE_KEYS.USERS, users);
+          Auth.setCurrentUser(user);
+          App.updateUserHeader(user);
+          Toast.success('Profile details updated.');
+        }
+      },
+
+      changePassword() {
+        const user = Auth.getCurrentUser();
+        if (!user) return;
+
+        const oldP = document.getElementById('prof-cit-old-pass').value;
+        const newP = document.getElementById('prof-cit-new-pass').value;
+
+        if (oldP !== user.password) {
+          Toast.error('Current password does not match.');
+          return;
+        }
+
+        if (!newP || newP.length < 4) {
+          Toast.error('New password must be at least 4 characters.');
+          return;
+        }
+
+        user.password = newP;
+        const users = GTStorage.get(STORAGE_KEYS.USERS, []);
+        const idx = users.findIndex(u => u.id === user.id);
+        if (idx !== -1) {
+          users[idx].password = newP;
+          GTStorage.set(STORAGE_KEYS.USERS, users);
+          Auth.setCurrentUser(user);
+          Toast.success('Password changed successfully.');
+          document.getElementById('prof-cit-old-pass').value = '';
+          document.getElementById('prof-cit-new-pass').value = '';
+        }
+      }
+    };
+  </script>
+
+</body>
+</html>
+

@@ -1,0 +1,105 @@
+/**
+ * GrievanceTrack - Responsive Layouts & Mobile Adaptation
+ */
+
+/* Tablets & Small Laptops (<= 1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+  .main-wrapper {
+    margin-left: 220px;
+  }
+  .page-content {
+    padding: 1.25rem 1.25rem 2.5rem;
+  }
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile & Tablets (<= 768px) */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 260px;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-wrapper {
+    margin-left: 0;
+  }
+
+  .topbar {
+    padding: 0 1rem;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+
+  .global-search-trigger {
+    min-width: 140px;
+  }
+  .search-shortcut-pill {
+    display: none;
+  }
+
+  .live-clock-pill {
+    display: none;
+  }
+
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpi-micro-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dossier-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-roles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-card {
+    padding: 1.5rem;
+  }
+}
+
+/* Small Screens (<= 480px) */
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .toast {
+    min-width: auto;
+    width: calc(100vw - 32px);
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .topbar-user-name {
+    display: none;
+  }
+
+  .global-search-trigger span {
+    display: none;
+  }
+  .global-search-trigger {
+    min-width: auto;
+    padding: 0.45rem;
+  }
+}
